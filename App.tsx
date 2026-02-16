@@ -308,6 +308,41 @@ const App: React.FC = () => {
         if (dbProjects.length > 0) {
           console.log(`Loaded ${dbProjects.length} projects from database`);
           setProjects(dbProjects);
+          
+          // Automatically generate AI plans for user-owned projects that don't have data
+          const userOwnedProjects = dbProjects.filter(p => (p.ownerId === user.id || p.ownerId === 'guest') && p.sheets.length > 0);
+          for (const project of userOwnedProjects) {
+            const firstSheet = project.sheets[0];
+            if (firstSheet && firstSheet.rows.length === 0) {
+              // Generate plan in background
+              generateProjectPlan(project.name).then(plan => {
+                setProjects(prev => prev.map(p => {
+                  if (p.id !== project.id) return p;
+                  const updatedSheets = p.sheets.map((s, idx) => {
+                    if (idx === 0) {
+                      return { ...s, rows: plan.tasks };
+                    }
+                    return s;
+                  });
+                  return { ...p, sheets: updatedSheets };
+                }));
+                // Log activity for the project
+                setProjects(prev => prev.map(p => {
+                  if (p.id !== project.id) return p;
+                  const entry: ActivityEntry = { 
+                    id: `act-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`, 
+                    userId: user.id, 
+                    userName: user.name, 
+                    action: `AI generated project plan for "${project.name}"`, 
+                    timestamp: Date.now() 
+                  };
+                  return { ...p, activityLog: [...(p.activityLog || []), entry] };
+                }));
+              }).catch(error => {
+                console.error(`Error generating plan for ${project.name}:`, error);
+              });
+            }
+          }
         }
         
         // Load workspaces from database
@@ -329,7 +364,7 @@ const App: React.FC = () => {
     }
     
     loadDataFromDatabase();
-  }, [user]);
+  }, [user, activeWorkspaceId]);
 
   const addNotification = useCallback((title: string, message: string, type: 'info' | 'success' | 'warning' = 'info') => {
     const newNotif: AppNotification = { id: `notif-${Date.now()}-${Math.random()}`, title, message, type, timestamp: Date.now() };
@@ -716,13 +751,40 @@ const App: React.FC = () => {
     setWorkspaces(prev => [...prev, newWs]); handleSelectWorkspace(newWs.id); 
   };
 
-  const handleCreateProject = (name: string, template?: Template) => {
+  const handleCreateProject = async (name: string, template?: Template) => {
     if (!user) return;
     let initialSheets: Sheet[] = [{ ...INITIAL_SHEET, id: `sheet-${Date.now()}`, name: 'New Sheet', rows: [] }];
     let automations: AutomationRule[] = [];
     if (template) { initialSheets = template.sheets.map(s => ({ ...s, id: `sheet-${Date.now()}-${Math.random()}` })); automations = template.automations || []; }
     const newProj: Project = { id: `proj-${Date.now()}`, name, workspaceId: activeWorkspaceId, sheets: initialSheets, activeSheetId: initialSheets[0].id, ownerId: user.id, members: [{ userId: user.id, email: user.email, name: user.name, role: 'Owner' }], activityLog: [{ id: 'init', userId: user.id, userName: user.name, action: `Created project ${template ? 'from template ' + template.name : ''}`, timestamp: Date.now() }], savedViews: [], automations, integrations: { googleDriveConnected: false, apiKeys: [] } };
     setProjects(prev => [...prev, newProj]); setActiveProjectId(newProj.id); setCurrentPage('project'); setIsTemplateGalleryOpen(false);
+    
+    // Automatically generate AI project plan if not using a template
+    if (!template) {
+      try {
+        addNotification("AI Plan Generation", `Generating plan for "${name}"...`, "info");
+        const plan = await generateProjectPlan(name);
+        
+        // Update the project with the generated plan
+        setProjects(prev => prev.map(p => {
+          if (p.id !== newProj.id) return p;
+          const updatedSheets = p.sheets.map((s, idx) => {
+            if (idx === 0) {
+              // Add generated tasks to the first sheet
+              return { ...s, rows: plan.tasks };
+            }
+            return s;
+          });
+          return { ...p, sheets: updatedSheets };
+        }));
+        
+        logActivity(`AI generated project plan for "${name}"`);
+        addNotification("Plan Generated", `AI plan created for "${name}"`, "success");
+      } catch (error) {
+        console.error(`Error generating plan for ${name}:`, error);
+        addNotification("Generation Error", `Failed to generate plan for "${name}"`, "warning");
+      }
+    }
   };
 
   const handleRenameProject = useCallback((id: string, name: string) => {
