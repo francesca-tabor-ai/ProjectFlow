@@ -13,24 +13,74 @@
 -- 1. PROFILES (User must exist in auth.users first)
 -- ============================================================
 -- Note: In production, profiles are created automatically via trigger
--- when a user signs up. For dummy data, we'll insert directly.
--- The user must exist in auth.users first (created via Supabase Auth)
+-- when a user signs up. For dummy data, we'll create the user first,
+-- then update the profile with specific details.
 
--- Assuming user 'pm@2021.ai' exists in auth.users with UUID
--- We'll use a placeholder UUID - replace with actual auth.users.id
 DO $$
 DECLARE
   v_user_id UUID := '00000000-0000-0000-0000-000000000001'::UUID;
+  v_email TEXT := 'pm@2021.ai';
+  v_user_exists BOOLEAN;
+  v_instance_id UUID;
 BEGIN
-  -- Insert profile (assuming user exists in auth.users)
+  -- Check if user exists in auth.users
+  SELECT EXISTS(SELECT 1 FROM auth.users WHERE id = v_user_id) INTO v_user_exists;
+  
+  -- If user doesn't exist, create it in auth.users
+  -- The trigger will automatically create a profile
+  IF NOT v_user_exists THEN
+    -- Get instance_id from an existing user, or use a default
+    SELECT COALESCE(
+      (SELECT instance_id FROM auth.users LIMIT 1),
+      '00000000-0000-0000-0000-000000000000'::UUID
+    ) INTO v_instance_id;
+    
+    INSERT INTO auth.users (
+      id,
+      instance_id,
+      email,
+      encrypted_password,
+      email_confirmed_at,
+      raw_app_meta_data,
+      raw_user_meta_data,
+      created_at,
+      updated_at,
+      confirmation_token,
+      email_change,
+      email_change_token_new,
+      recovery_token
+    )
+    VALUES (
+      v_user_id,
+      v_instance_id,
+      v_email,
+      crypt('dummy-password', gen_salt('bf')), -- Dummy password for test data
+      NOW(),
+      '{"provider": "email", "providers": ["email"]}'::jsonb,
+      '{"name": "AI Product Manager"}'::jsonb,
+      NOW(),
+      NOW(),
+      '',
+      '',
+      '',
+      ''
+    );
+  END IF;
+
+  -- Update the profile with specific name and color
+  -- (The trigger may have created it with default values, or it might not exist yet)
   INSERT INTO profiles (id, name, email, color)
   VALUES (
     v_user_id,
     'AI Product Manager',
-    'pm@2021.ai',
+    v_email,
     '#6366f1'
   )
-  ON CONFLICT (id) DO NOTHING;
+  ON CONFLICT (id) DO UPDATE
+  SET
+    name = EXCLUDED.name,
+    email = EXCLUDED.email,
+    color = EXCLUDED.color;
 END $$;
 
 -- ============================================================

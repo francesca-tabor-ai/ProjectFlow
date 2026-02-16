@@ -57,11 +57,146 @@ Creates:
 - Triggers for automatic profile creation
 
 ### `003_dummy_data.sql` (Optional)
-Loads sample data for testing:
-- 1 user (AI Product Manager)
+Loads sample data for ML Observability Platform:
+- 1 user (AI Product Manager - pm@2021.ai)
 - 1 workspace (2021.ai Observability Workspace)
 - 1 project (ML Observability Platform)
 - 3 sheets with columns and rows
+- See [DUMMY_DATA_GUIDE.md](../docs/DUMMY_DATA_GUIDE.md) for details
+
+### `004_dummy_data_nordjylland.sql` (Optional)
+Loads sample data for North Denmark Region AI Transformation:
+- 1 user (AI Product Owner - owner@nordjylland.dk)
+- 1 workspace (North Denmark Region AI Transformation)
+- 1 project (Generative AI Platform Deployment)
+- 4 sheets with columns and rows
+- See [DUMMY_DATA_GUIDE.md](../docs/DUMMY_DATA_GUIDE.md) for details
+
+### `005_dummy_data_talomdiabetes.sql` (Optional)
+Loads sample data for Tal om Diabetes Healthcare AI Platform:
+- 1 user (Tal om Diabetes Product Owner - owner@talomdiabetes.ai)
+- 1 workspace (GRACE AI Platform - Healthcare AI)
+- 1 project (Tal om Diabetes Conversational Health Data Platform)
+- 4 sheets with columns and rows
+- See [DUMMY_DATA_GUIDE.md](../docs/DUMMY_DATA_GUIDE.md) for details
+
+### `006_dummy_data_lif2.sql` (Optional)
+Loads sample data for LIF2.0 Real-Time COVID Intelligence Platform:
+- 1 user (Eureka Project Owner - eureka.owner@example.com)
+- 1 workspace (LIF2.0 Real-Time Intelligence Workspace)
+- 1 project (LIF2.0 Real-Time COVID Intelligence Platform)
+- 4 sheets with columns and rows
+- See [DUMMY_DATA_GUIDE.md](../docs/DUMMY_DATA_GUIDE.md) for details
+
+### `007_dummy_data_stockholm.sql` (Optional)
+Loads sample data for Stockholm County Social Services AI:
+- 1 user (AI Governance Lead - owner@stockholm-ai-project.com)
+- 1 workspace (Stockholm County Social Services AI Workspace)
+- 1 project (AI-Assisted Case Prioritization)
+- 3 sheets with columns and rows
+- See [DUMMY_DATA_GUIDE.md](../docs/DUMMY_DATA_GUIDE.md) for details
+
+### `008_dummy_data_linkgrc.sql` (Optional)
+Loads sample data for LinkGRC AI Compliance:
+- 1 user (Product Owner - Regulatory Monitoring - product.owner@linkgrc.com)
+- 1 workspace (LinkGRC AI Compliance Workspace)
+- 1 project (AI-Powered Regulatory Monitoring Pipeline)
+- 4 sheets with columns and rows
+- See [DUMMY_DATA_GUIDE.md](../docs/DUMMY_DATA_GUIDE.md) for details
+
+### `009_dummy_data_nuvve.sql` (Optional)
+Loads sample data for Nuvve Energy Optimization:
+- 1 user (Energy AI Product Owner - owner@nuvve.com)
+- 1 workspace (Nuvve Energy Optimization Workspace)
+- 1 project (AI Forecasting and Market Optimization Platform)
+- 4 sheets with columns and rows
+- See [DUMMY_DATA_GUIDE.md](../docs/DUMMY_DATA_GUIDE.md) for details
+
+### `010_dummy_data_rigshospitalet.sql` (Optional)
+Loads sample data for Rigshospitalet AI Virtual Assistant:
+- 1 user (Senior AI Engineer - ai.engineer@example.com)
+- 1 workspace (Healthcare AI Projects Workspace)
+- 1 project (Rigshospitalet AI Virtual Assistant)
+- 3 sheets with columns and rows
+- See [DUMMY_DATA_GUIDE.md](../docs/DUMMY_DATA_GUIDE.md) for details
+
+### `011_dummy_data_prometric.sql` (Optional)
+Loads sample data for Prometric AI Proctoring:
+- 1 user (AI Product Owner - owner@prometric-ai.com)
+- 1 workspace (Prometric Responsible AI Workspace)
+- 1 project (AI-Powered Proctoring and Responsible AI Monitoring)
+- 3 sheets with columns and rows
+- See [DUMMY_DATA_GUIDE.md](../docs/DUMMY_DATA_GUIDE.md) for details
+
+### `012_dummy_data_plesner.sql` (Optional)
+Loads sample data for Plesner Enterprise AI:
+- 1 user (Enterprise AI Lead - ai.lead@plesner.com)
+- 1 workspace (Plesner Enterprise AI Transformation)
+- 1 project (Enterprise LLM Assistant and Responsible AI Platform Rollout)
+- 4 sheets with columns and rows
+- See [DUMMY_DATA_GUIDE.md](../docs/DUMMY_DATA_GUIDE.md) for details
+
+### `013_dummy_data_credit_risk.sql` (Optional)
+Loads sample data for AI Credit Risk Platform:
+- 1 user (AI Risk Product Owner - risk.ai.owner@example.com)
+- 1 workspace (AI Credit Risk Platform Workspace)
+- 1 project (Real-Time AI Credit Risk Prediction)
+- 3 sheets with columns and rows
+- See [DUMMY_DATA_GUIDE.md](../docs/DUMMY_DATA_GUIDE.md) for details
+
+### `014_dummy_data_betternow.sql` (Optional)
+Loads sample data for BetterNow AI Fundraising:
+- 1 user (AI Product Manager - pm@betternow.ai)
+- 1 workspace (BetterNow AI Fundraising Workspace)
+- 1 project (AI Personalization and Recommendation Engine)
+- 4 sheets with columns and rows
+- See [DUMMY_DATA_GUIDE.md](../docs/DUMMY_DATA_GUIDE.md) for details
+
+### `015_dummy_data_freight_forecasting.sql` (Optional)
+Loads sample data for Freight Market Forecasting:
+- 1 user (Senior Data Engineer - engineer@example.com)
+- 1 workspace (Freight Market Forecasting Workspace)
+- 1 project (Freight Market Price Forecasting and Fleet Positioning Optimization)
+- 4 sheets with columns and rows
+- See [DUMMY_DATA_GUIDE.md](../docs/DUMMY_DATA_GUIDE.md) for details
+
+### `016_dummy_data_blockshipping.sql` (Optional)
+Loads sample data for Blockshipping AI Terminal Optimization:
+- 1 user (Blockshipping Project Owner - owner@blockshipping.ai)
+- 1 workspace (AI Terminal Optimization Workspace)
+- 1 project (AI Import Dwell-Time Prediction for Container Terminal Optimization)
+- 3 sheets with columns and rows
+- See [DUMMY_DATA_GUIDE.md](../docs/DUMMY_DATA_GUIDE.md) for details
+
+### `017_dummy_data_blockshipping_multi_project.sql` (Optional)
+Loads sample data for Blockshipping AI Optimization (multi-project workspace):
+- 1 user (AI Product Lead - candidate@blockshipping.ai)
+- 1 workspace (Blockshipping AI Optimization Workspace)
+- 4 projects with 4 sheets total
+- See [DUMMY_DATA_GUIDE.md](../docs/DUMMY_DATA_GUIDE.md) for details
+
+### `018_dummy_data_regulatory_authority.sql` (Optional)
+Loads sample data for Regulatory Authority AI Transformation:
+- 1 user (AI Workflow Project Owner - regulatory.ai.lead@example.com)
+- 1 workspace (Regulatory Authority AI Transformation)
+- 1 project (AI Email Routing and Workflow Automation)
+- 3 sheets with columns and rows
+- See [DUMMY_DATA_GUIDE.md](../docs/DUMMY_DATA_GUIDE.md) for details
+
+### `019_dummy_data_rail_transport.sql` (Optional)
+Loads sample data for Rail Transport AI Intelligence:
+- 1 user (AI Retention Lead - rail.ai.lead@example.com)
+- 1 workspace (Rail Transport AI Intelligence Workspace)
+- 1 project (Customer Churn Prediction and Retention Intelligence)
+- 4 sheets with columns and rows
+- See [DUMMY_DATA_GUIDE.md](../docs/DUMMY_DATA_GUIDE.md) for details
+
+### `020_dummy_data_global_bakery.sql` (Optional)
+Loads sample data for Global Bakery AI Transformation:
+- 1 user (AI Sales Platform Owner - sales.ai.owner@example.com)
+- 1 workspace (Global Bakery AI Transformation Workspace)
+- 1 project (Real-Time AI Sales Prediction and Recommendation Engine)
+- 4 sheets with columns and rows
 - See [DUMMY_DATA_GUIDE.md](../docs/DUMMY_DATA_GUIDE.md) for details
 
 ## Storage Setup
