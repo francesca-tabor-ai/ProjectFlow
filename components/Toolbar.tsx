@@ -124,9 +124,31 @@ const Toolbar: React.FC<ToolbarProps> = ({
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isViewsOpen, setIsViewsOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const filterContainerRef = useRef<HTMLDivElement>(null);
+  const viewsContainerRef = useRef<HTMLDivElement>(null);
   
   const canEdit = userRole !== 'Viewer';
   const activeFilterCount = activeFilters.owners.length + activeFilters.statuses.length + (activeFilters.dateRange !== 'all' ? 1 : 0);
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (filterContainerRef.current && !filterContainerRef.current.contains(event.target as Node)) {
+        setIsFilterOpen(false);
+      }
+      if (viewsContainerRef.current && !viewsContainerRef.current.contains(event.target as Node)) {
+        setIsViewsOpen(false);
+      }
+    };
+
+    if (isFilterOpen || isViewsOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isFilterOpen, isViewsOpen]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -224,30 +246,155 @@ const Toolbar: React.FC<ToolbarProps> = ({
             </div>
           )}
 
-          <button 
-            onClick={() => { setIsFilterOpen(!isFilterOpen); setIsViewsOpen(false); }}
-            className={`flex items-center gap-2 px-4 py-2 text-[13px] font-bold rounded-xl transition-all border ${
-              isFilterOpen || activeFilterCount > 0 ? 'text-[#6366f1] bg-[#f0f4ff] border-[#6366f1]/20 shadow-sm' : 'text-[#697386] bg-white border-[#e3e8ee] hover:bg-[#f7f8f9]'
-            }`}
-          >
-            <FilterIcon className="w-4 h-4" />
-            Filter
-            {activeFilterCount > 0 && (
-              <span className="ml-1 px-1.5 bg-[#6366f1] text-white rounded-full text-[10px] font-black">
-                {activeFilterCount}
-              </span>
-            )}
-          </button>
+          <div className="relative">
+            <button 
+              onClick={() => { setIsFilterOpen(!isFilterOpen); setIsViewsOpen(false); }}
+              className={`flex items-center gap-2 px-4 py-2 text-[13px] font-bold rounded-xl transition-all border ${
+                isFilterOpen || activeFilterCount > 0 ? 'text-[#6366f1] bg-[#f0f4ff] border-[#6366f1]/20 shadow-sm' : 'text-[#697386] bg-white border-[#e3e8ee] hover:bg-[#f7f8f9]'
+              }`}
+            >
+              <FilterIcon className="w-4 h-4" />
+              Filter
+              {activeFilterCount > 0 && (
+                <span className="ml-1 px-1.5 bg-[#6366f1] text-white rounded-full text-[10px] font-black">
+                  {activeFilterCount}
+                </span>
+              )}
+            </button>
 
-          <button 
-            onClick={() => { setIsViewsOpen(!isViewsOpen); setIsFilterOpen(false); }}
-            className={`flex items-center gap-2 px-4 py-2 text-[13px] font-bold rounded-xl transition-all border ${
-              isViewsOpen ? 'text-[#1a1f36] bg-[#f7f8f9] border-[#e3e8ee]' : 'text-[#697386] bg-white border-[#e3e8ee] hover:bg-[#f7f8f9]'
-            }`}
-          >
-            <Bookmark className="w-4 h-4" />
-            Views
-          </button>
+            {/* Filter Dropdown */}
+            {isFilterOpen && (
+              <div ref={filterContainerRef} className="absolute top-full right-0 mt-2 w-80 bg-white border border-[#e3e8ee] rounded-xl shadow-xl z-50 p-4">
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-[11px] font-bold text-[#697386] uppercase tracking-wider mb-2 block">Owners</label>
+                    <div className="space-y-2 max-h-32 overflow-y-auto">
+                      {owners.map(owner => (
+                        <label key={owner} className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={activeFilters.owners.includes(owner)}
+                            onChange={(e) => {
+                              const newOwners = e.target.checked
+                                ? [...activeFilters.owners, owner]
+                                : activeFilters.owners.filter(o => o !== owner);
+                              onUpdateFilters({ ...activeFilters, owners: newOwners });
+                            }}
+                            className="w-4 h-4 text-[#6366f1] border-[#e3e8ee] rounded focus:ring-[#6366f1]"
+                          />
+                          <span className="text-[13px] font-medium text-[#1a1f36]">{owner}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-[11px] font-bold text-[#697386] uppercase tracking-wider mb-2 block">Status</label>
+                    <div className="space-y-2 max-h-32 overflow-y-auto">
+                      {statuses.map(status => (
+                        <label key={status} className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={activeFilters.statuses.includes(status)}
+                            onChange={(e) => {
+                              const newStatuses = e.target.checked
+                                ? [...activeFilters.statuses, status]
+                                : activeFilters.statuses.filter(s => s !== status);
+                              onUpdateFilters({ ...activeFilters, statuses: newStatuses });
+                            }}
+                            className="w-4 h-4 text-[#6366f1] border-[#e3e8ee] rounded focus:ring-[#6366f1]"
+                          />
+                          <span className="text-[13px] font-medium text-[#1a1f36]">{status}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-[11px] font-bold text-[#697386] uppercase tracking-wider mb-2 block">Date Range</label>
+                    <select
+                      value={activeFilters.dateRange}
+                      onChange={(e) => onUpdateFilters({ ...activeFilters, dateRange: e.target.value as any })}
+                      className="w-full px-3 py-2 text-[13px] font-medium border border-[#e3e8ee] rounded-lg focus:ring-2 focus:ring-[#6366f1] focus:border-[#6366f1] outline-none"
+                    >
+                      <option value="all">All Dates</option>
+                      <option value="today">Today</option>
+                      <option value="this-week">This Week</option>
+                      <option value="overdue">Overdue</option>
+                    </select>
+                  </div>
+
+                  {activeFilterCount > 0 && (
+                    <button
+                      onClick={() => onUpdateFilters({ owners: [], statuses: [], dateRange: 'all' })}
+                      className="w-full px-4 py-2 text-[13px] font-bold text-[#6366f1] bg-[#f0f4ff] rounded-lg hover:bg-[#e0e7ff] transition-colors"
+                    >
+                      Clear All Filters
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="relative">
+            <button 
+              onClick={() => { setIsViewsOpen(!isViewsOpen); setIsFilterOpen(false); }}
+              className={`flex items-center gap-2 px-4 py-2 text-[13px] font-bold rounded-xl transition-all border ${
+                isViewsOpen ? 'text-[#1a1f36] bg-[#f7f8f9] border-[#e3e8ee]' : 'text-[#697386] bg-white border-[#e3e8ee] hover:bg-[#f7f8f9]'
+              }`}
+            >
+              <Bookmark className="w-4 h-4" />
+              Views
+            </button>
+
+            {/* Views Dropdown */}
+            {isViewsOpen && (
+              <div ref={viewsContainerRef} className="absolute top-full right-0 mt-2 w-80 bg-white border border-[#e3e8ee] rounded-xl shadow-xl z-50 p-4">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-[13px] font-bold text-[#1a1f36]">Saved Views</h3>
+                    {canEdit && (
+                      <button
+                        onClick={() => {
+                          const name = prompt('View name:');
+                          if (name) onSaveView(name);
+                        }}
+                        className="text-[12px] font-bold text-[#6366f1] hover:text-[#4f46e5]"
+                      >
+                        + New View
+                      </button>
+                    )}
+                  </div>
+                  <div className="space-y-1 max-h-64 overflow-y-auto">
+                    {savedViews.length === 0 ? (
+                      <p className="text-[12px] text-[#697386] text-center py-4">No saved views</p>
+                    ) : (
+                      savedViews.map(view => (
+                        <div key={view.id} className="flex items-center justify-between p-2 hover:bg-[#f7f8f9] rounded-lg group">
+                          <button
+                            onClick={() => onApplySavedView(view)}
+                            className="flex-1 text-left text-[13px] font-medium text-[#1a1f36] hover:text-[#6366f1]"
+                          >
+                            {view.name}
+                          </button>
+                          {canEdit && (
+                            <button
+                              onClick={() => onDeleteView(view.id)}
+                              className="opacity-0 group-hover:opacity-100 text-[#a3acb9] hover:text-red-500 transition-opacity"
+                              title="Delete view"
+                            >
+                              ×
+                            </button>
+                          )}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="h-6 w-px bg-[#e3e8ee]"></div>
