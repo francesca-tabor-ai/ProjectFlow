@@ -1,5 +1,5 @@
 -- ============================================================
--- PROJECT PLANNER DUMMY DATA FOR GLOBAL BAKERY AI TRANSFORMATION
+-- GLOBAL BAKERY AI TRANSFORMATION - SALES PREDICTION DATA
 -- Real-Time AI Sales Prediction and Recommendation Engine
 -- Hierarchy: Profile > Workspace > Project > Sheet > Column > Row (with row_data JSONB)
 -- ============================================================
