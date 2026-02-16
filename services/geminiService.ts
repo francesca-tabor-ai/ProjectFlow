@@ -102,7 +102,8 @@ const validateInput = (input: string): boolean => {
 const callAIWithFallback = async (
   prompt: string,
   schema: any,
-  taskType: string
+  taskType: string,
+  systemPrompt?: string
 ): Promise<{ text: string, provider: string, model: string }> => {
   const providers = [
     { type: 'openai' as const, key: process.env.OPENAI_API_KEY },
@@ -127,17 +128,33 @@ const callAIWithFallback = async (
 
       if (providerConfig.type === 'openai') {
         const openai = new OpenAI({ apiKey: providerConfig.key! });
+        const messages: any[] = [];
+        if (systemPrompt) {
+          messages.push({ role: "system", content: systemPrompt });
+        } else {
+          messages.push({ role: "system", content: "You are a project management assistant. Always respond with valid JSON." });
+        }
+        messages.push({ role: "user", content: prompt });
         const response = await openai.chat.completions.create({
           model: modelName,
-          messages: [
-            { role: "system", content: "You are a project management assistant. Always respond with valid JSON." },
-            { role: "user", content: prompt }
-          ],
+          messages,
           response_format: { type: "json_object" },
           temperature: 0.7
         });
+        let responseText = response.choices[0]?.message?.content || "[]";
+        // OpenAI returns JSON object, extract array if needed
+        try {
+          const parsed = JSON.parse(responseText);
+          if (parsed.tasks || parsed.items) {
+            responseText = JSON.stringify(parsed.tasks || parsed.items);
+          } else if (Array.isArray(parsed)) {
+            responseText = JSON.stringify(parsed);
+          }
+        } catch (e) {
+          // Keep original if parsing fails
+        }
         return {
-          text: response.choices[0]?.message?.content || "[]",
+          text: responseText,
           provider: 'openai',
           model: modelName
         };
@@ -145,11 +162,14 @@ const callAIWithFallback = async (
 
       if (providerConfig.type === 'anthropic') {
         const anthropic = new Anthropic({ apiKey: providerConfig.key! });
+        const userMessage = systemPrompt 
+          ? `${systemPrompt}\n\n${prompt}\n\nRespond with valid JSON only.`
+          : `${prompt}\n\nRespond with valid JSON only.`;
         const response = await anthropic.messages.create({
           model: modelName,
           max_tokens: 4096,
           messages: [
-            { role: "user", content: `${prompt}\n\nRespond with valid JSON only.` }
+            { role: "user", content: userMessage }
           ]
         });
         const text = response.content[0].type === 'text' ? response.content[0].text : '';
@@ -162,9 +182,10 @@ const callAIWithFallback = async (
 
       if (providerConfig.type === 'gemini') {
         const gemini = new GoogleGenAI({ apiKey: providerConfig.key! });
+        const fullPrompt = systemPrompt ? `${systemPrompt}\n\n${prompt}` : prompt;
         const response = await gemini.models.generateContent({
           model: modelName,
-          contents: prompt,
+          contents: fullPrompt,
           config: {
             responseMimeType: "application/json",
             responseSchema: schema,
@@ -203,6 +224,97 @@ export const generateProjectPlan = async (objective: string): Promise<{ tasks: R
     const prompt = `Generate a detailed project plan for: ${objective}. Include 'reasoning' for each task. Today's date is ${new Date().toISOString().split('T')[0]}. Return a JSON array of tasks with the following structure: task, owner, status, priority, startDate, dueDate, progress (0-100), and reasoning.`;
     
     const result = await callAIWithFallback(prompt, projectSchema, 'planner');
+    const tasks = JSON.parse(result.text || "[]");
+    
+    // Handle OpenAI/Anthropic responses that might be wrapped in JSON object
+    const taskArray = Array.isArray(tasks) ? tasks : (tasks.tasks || tasks.items || []);
+    
+    if (!Array.isArray(taskArray) || taskArray.length === 0) {
+      throw new Error("AI returned malformed plan.");
+    }
+
+    const consensus = calculateConsensus([taskArray]);
+
+    logAIMetric({
+      timestamp: Date.now(),
+      latency: Date.now() - startTime,
+      model: `${result.provider}:${result.model}`,
+      success: true,
+      confidence: 0.95,
+      taskType: 'planner',
+      consensusScore: consensus
+    });
+
+    return { 
+      tasks: taskArray.map((t: any, idx: number) => ({ ...t, id: `ai-${Date.now()}-${idx}` })),
+      confidence: 0.95,
+      consensus
+    };
+  } catch (error) {
+    logAIMetric({
+      timestamp: Date.now(),
+      latency: Date.now() - startTime,
+      model: 'unknown',
+      success: false,
+      confidence: 0,
+      taskType: 'planner'
+    });
+    throw error;
+  }
+};
+
+export const generateProjectPlanFromPRD = async (
+  projectName: string,
+  prd?: string,
+  description?: string,
+  template?: { name: string; description: string; sheets: any[] }
+): Promise<{ tasks: RowData[], confidence: number, consensus: number }> => {
+  const inputText = [prd, description, projectName].filter(Boolean).join('\n');
+  if (!validateInput(inputText)) throw new Error("Invalid or unsafe input detected.");
+  
+  const startTime = Date.now();
+  
+  try {
+    // Build system prompt with template context
+    let systemContext = `You are an expert project planner. Generate a detailed, actionable project plan based on the provided information.`;
+    
+    if (template) {
+      systemContext += `\n\nTemplate Context:
+- Template Name: ${template.name}
+- Template Description: ${template.description}
+- The template includes ${template.sheets.length} sheet(s) with pre-configured structure.
+Use the template's structure and column types as a guide for organizing tasks.`;
+      
+      // Include template sheet structure if available
+      if (template.sheets && template.sheets.length > 0) {
+        const firstSheet = template.sheets[0];
+        if (firstSheet.columns) {
+          const columnTypes = firstSheet.columns.map((col: any) => `${col.title} (${col.type})`).join(', ');
+          systemContext += `\n- Available columns: ${columnTypes}`;
+        }
+      }
+    }
+    
+    // Build the user prompt with project details
+    let userPrompt = `Project Name: ${projectName}\n`;
+    if (description) {
+      userPrompt += `\nProject Description: ${description}\n`;
+    }
+    if (prd) {
+      userPrompt += `\nProduct Requirements Document (PRD):\n${prd}\n`;
+    }
+    
+    userPrompt += `\nGenerate a comprehensive project plan that:
+1. Breaks down the project into actionable tasks based on the PRD and description
+2. Aligns with the template structure if provided
+3. Includes realistic timelines and dependencies
+4. Assigns appropriate priorities and owners
+5. Sets realistic start and due dates (today is ${new Date().toISOString().split('T')[0]})
+
+Return a JSON object with a "tasks" key containing an array of tasks. Each task should have: task, owner, status, priority, startDate, dueDate, progress (0-100), and reasoning.
+Each task should be specific, measurable, and aligned with the PRD requirements.`;
+    
+    const result = await callAIWithFallback(userPrompt, projectSchema, 'planner', systemContext);
     const tasks = JSON.parse(result.text || "[]");
     
     // Handle OpenAI/Anthropic responses that might be wrapped in JSON object

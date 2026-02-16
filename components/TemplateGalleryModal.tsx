@@ -6,16 +6,18 @@ import { Template } from '../types';
 
 interface TemplateGalleryModalProps {
   onClose: () => void;
-  onCreate: (name: string, template?: Template) => void;
+  onCreate: (name: string, template?: Template, prd?: string, description?: string) => void;
 }
 
 const TemplateGalleryModal: React.FC<TemplateGalleryModalProps> = ({ onClose, onCreate }) => {
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
   const [projectName, setProjectName] = useState('');
+  const [prd, setPrd] = useState('');
+  const [description, setDescription] = useState('');
 
   const handleStart = () => {
     const finalName = projectName.trim() || (selectedTemplate ? selectedTemplate.name : 'New Project');
-    onCreate(finalName, selectedTemplate || undefined);
+    onCreate(finalName, selectedTemplate || undefined, prd.trim() || undefined, description.trim() || undefined);
   };
 
   return (
@@ -112,9 +114,10 @@ const TemplateGalleryModal: React.FC<TemplateGalleryModalProps> = ({ onClose, on
               </div>
             </div>
 
-            {/* Footer - Project Name Input */}
-            <div className="p-8 border-t border-[#e3e8ee] bg-[#fbfcfd] flex items-center gap-6 shrink-0">
-               <div className="flex-1 space-y-1.5">
+            {/* Footer - Project Details Input */}
+            <div className="p-8 border-t border-[#e3e8ee] bg-[#fbfcfd] space-y-4 shrink-0 max-h-[40vh] overflow-y-auto custom-scrollbar">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
                   <label className="text-[11px] font-bold text-[#697386] uppercase tracking-wider ml-1">Project Name</label>
                   <input 
                     type="text" 
@@ -123,14 +126,37 @@ const TemplateGalleryModal: React.FC<TemplateGalleryModalProps> = ({ onClose, on
                     onChange={(e) => setProjectName(e.target.value)}
                     className="w-full px-5 py-3.5 bg-white border border-[#e3e8ee] rounded-xl focus:ring-4 focus:ring-[#6366f1]/10 focus:border-[#6366f1] outline-none text-[#1a1f36] font-bold shadow-sm"
                   />
-               </div>
-               <button 
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold text-[#697386] uppercase tracking-wider ml-1">Description (Optional)</label>
+                  <input 
+                    type="text" 
+                    placeholder="Brief project description..."
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    className="w-full px-5 py-3.5 bg-white border border-[#e3e8ee] rounded-xl focus:ring-4 focus:ring-[#6366f1]/10 focus:border-[#6366f1] outline-none text-[#1a1f36] font-medium shadow-sm"
+                  />
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-bold text-[#697386] uppercase tracking-wider ml-1">PRD - Product Requirements Document (Optional)</label>
+                <textarea 
+                  placeholder="Paste your PRD here. The AI will use this to generate a detailed project plan based on the selected template..."
+                  value={prd}
+                  onChange={(e) => setPrd(e.target.value)}
+                  rows={4}
+                  className="w-full px-5 py-3.5 bg-white border border-[#e3e8ee] rounded-xl focus:ring-4 focus:ring-[#6366f1]/10 focus:border-[#6366f1] outline-none text-[#1a1f36] font-medium shadow-sm resize-none"
+                />
+              </div>
+              <div className="flex justify-end">
+                <button 
                   onClick={handleStart}
-                  className="px-8 py-3.5 stripe-gradient text-white font-bold rounded-xl shadow-xl hover:shadow-2xl hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center gap-3 mt-4"
-               >
+                  className="px-8 py-3.5 stripe-gradient text-white font-bold rounded-xl shadow-xl hover:shadow-2xl hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center gap-3"
+                >
                   {selectedTemplate ? 'Use Template' : 'Start Project'}
                   <ArrowRight className="w-5 h-5" />
-               </button>
+                </button>
+              </div>
             </div>
           </div>
         </div>

@@ -13,7 +13,7 @@ import UserProfileModal from './components/UserProfileModal';
 import { supabase } from './lib/supabaseClient';
 import { getAllProjects } from './services/projectService';
 import { getWorkspaces } from './services/workspaceService';
-import { generateProjectPlan } from './services/geminiService';
+import { generateProjectPlan, generateProjectPlanFromPRD } from './services/geminiService';
 import ShareModal from './components/ShareModal';
 import CommentsPanel from './components/CommentsPanel';
 import ActivityLogPage from './components/ActivityLogPanel';
@@ -751,7 +751,7 @@ const App: React.FC = () => {
     setWorkspaces(prev => [...prev, newWs]); handleSelectWorkspace(newWs.id); 
   };
 
-  const handleCreateProject = async (name: string, template?: Template) => {
+  const handleCreateProject = async (name: string, template?: Template, prd?: string, description?: string) => {
     if (!user) return;
     let initialSheets: Sheet[] = [{ ...INITIAL_SHEET, id: `sheet-${Date.now()}`, name: 'New Sheet', rows: [] }];
     let automations: AutomationRule[] = [];
@@ -759,11 +759,28 @@ const App: React.FC = () => {
     const newProj: Project = { id: `proj-${Date.now()}`, name, workspaceId: activeWorkspaceId, sheets: initialSheets, activeSheetId: initialSheets[0].id, ownerId: user.id, members: [{ userId: user.id, email: user.email, name: user.name, role: 'Owner' }], activityLog: [{ id: 'init', userId: user.id, userName: user.name, action: `Created project ${template ? 'from template ' + template.name : ''}`, timestamp: Date.now() }], savedViews: [], automations, integrations: { googleDriveConnected: false, apiKeys: [] } };
     setProjects(prev => [...prev, newProj]); setActiveProjectId(newProj.id); setCurrentPage('project'); setIsTemplateGalleryOpen(false);
     
-    // Automatically generate AI project plan if not using a template
-    if (!template) {
+    // Automatically generate AI project plan using PRD/description if provided, or fallback to simple generation
+    if (prd || description || !template) {
       try {
         addNotification("AI Plan Generation", `Generating plan for "${name}"...`, "info");
-        const plan = await generateProjectPlan(name);
+        let plan;
+        
+        if (prd || description) {
+          // Use enhanced PRD-based generation
+          plan = await generateProjectPlanFromPRD(
+            name,
+            prd,
+            description,
+            template ? {
+              name: template.name,
+              description: template.description,
+              sheets: template.sheets
+            } : undefined
+          );
+        } else {
+          // Fallback to simple generation
+          plan = await generateProjectPlan(name);
+        }
         
         // Update the project with the generated plan
         setProjects(prev => prev.map(p => {
@@ -778,7 +795,7 @@ const App: React.FC = () => {
           return { ...p, sheets: updatedSheets };
         }));
         
-        logActivity(`AI generated project plan for "${name}"`);
+        logActivity(`AI generated project plan for "${name}"${prd ? ' from PRD' : ''}${template ? ` using ${template.name} template` : ''}`);
         addNotification("Plan Generated", `AI plan created for "${name}"`, "success");
       } catch (error) {
         console.error(`Error generating plan for ${name}:`, error);
