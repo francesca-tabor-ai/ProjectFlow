@@ -2,6 +2,58 @@ import { getSupabaseClient } from './supabaseService';
 import { Project, Sheet, Column, RowData } from '../types';
 
 /**
+ * Get all projects (across all workspaces)
+ */
+export const getAllProjects = async (): Promise<Project[]> => {
+  const supabase = getSupabaseClient();
+  
+  const { data, error } = await supabase
+    .from('projects')
+    .select(`
+      *,
+      sheets (
+        *,
+        columns (*),
+        rows (*)
+      )
+    `)
+    .order('created_at', { ascending: false });
+  
+  if (error) throw error;
+  
+  // Transform data to match Project type
+  return (data || []).map(project => ({
+    id: project.id,
+    name: project.name,
+    workspaceId: project.workspace_id,
+    activeSheetId: project.active_sheet_id,
+    ownerId: project.owner_id,
+    sheets: (project.sheets || []).map((sheet: any) => ({
+      id: sheet.id,
+      name: sheet.name,
+      columns: (sheet.columns || []).map((col: any) => ({
+        id: col.id,
+        title: col.title,
+        type: col.type,
+        width: col.width,
+        options: col.options,
+        permissions: col.permissions
+      })),
+      rows: (sheet.rows || []).map((row: any) => ({
+        id: row.id,
+        ...row.row_data,
+        dependencies: row.dependencies || []
+      }))
+    })),
+    members: [], // Load separately if needed
+    activityLog: [], // Load separately if needed
+    savedViews: [], // Load separately if needed
+    automations: [], // Load separately if needed
+    integrations: { googleDriveConnected: false, apiKeys: [] } // Load separately if needed
+  }));
+};
+
+/**
  * Get all projects for a workspace
  */
 export const getProjects = async (workspaceId: string): Promise<Project[]> => {

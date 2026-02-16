@@ -11,6 +11,8 @@ import AuthPage from './components/AuthPage';
 import AuthCallback from './components/AuthCallback';
 import UserProfileModal from './components/UserProfileModal';
 import { supabase } from './lib/supabaseClient';
+import { getAllProjects } from './services/projectService';
+import { getWorkspaces } from './services/workspaceService';
 import ShareModal from './components/ShareModal';
 import CommentsPanel from './components/CommentsPanel';
 import ActivityLogPage from './components/ActivityLogPanel';
@@ -294,6 +296,40 @@ const App: React.FC = () => {
     };
   }, [userColor]);
 
+  // Load projects and workspaces from database when user is authenticated
+  useEffect(() => {
+    async function loadDataFromDatabase() {
+      if (!user) return;
+      
+      try {
+        // Load all projects from database
+        const dbProjects = await getAllProjects();
+        if (dbProjects.length > 0) {
+          console.log(`Loaded ${dbProjects.length} projects from database`);
+          setProjects(dbProjects);
+        }
+        
+        // Load workspaces from database
+        const dbWorkspaces = await getWorkspaces();
+        if (dbWorkspaces.length > 0) {
+          console.log(`Loaded ${dbWorkspaces.length} workspaces from database`);
+          setWorkspaces(dbWorkspaces);
+          
+          // Set active workspace to first one if current one doesn't exist
+          const workspaceExists = dbWorkspaces.some(ws => ws.id === activeWorkspaceId);
+          if (!workspaceExists && dbWorkspaces.length > 0) {
+            setActiveWorkspaceId(dbWorkspaces[0].id);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading data from database:', error);
+        // Don't show error to user if database is not available, just use localStorage
+      }
+    }
+    
+    loadDataFromDatabase();
+  }, [user]);
+
   const addNotification = useCallback((title: string, message: string, type: 'info' | 'success' | 'warning' = 'info') => {
     const newNotif: AppNotification = { id: `notif-${Date.now()}-${Math.random()}`, title, message, type, timestamp: Date.now() };
     setNotifications(prev => [newNotif, ...prev].slice(0, 5));
@@ -354,7 +390,8 @@ const App: React.FC = () => {
   }, [user, channel]);
 
   const activeWorkspace = useMemo(() => workspaces.find(ws => ws.id === activeWorkspaceId) || workspaces[0], [workspaces, activeWorkspaceId]);
-  const workspaceProjects = useMemo(() => projects.filter(p => p.workspaceId === activeWorkspaceId), [projects, activeWorkspaceId]);
+  // Show all projects (not filtered by workspace) so all dummy projects are visible
+  const workspaceProjects = useMemo(() => projects, [projects]);
   const activeProject = useMemo(() => projects.find(p => p.id === activeProjectId) || workspaceProjects[0] || null, [projects, activeProjectId, workspaceProjects]);
 
   const currentUserRole = useMemo(() => {
