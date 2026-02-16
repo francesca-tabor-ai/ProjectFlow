@@ -299,7 +299,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                                     onClick={(e) => { e.stopPropagation(); onDeleteSheet(proj.id, sheet.id); }}
                                     className="p-1 hover:bg-red-50 rounded transition-all"
                                   >
-                                    <Trash2 className="w-3.5 h-3.5" text-[#a3acb9] hover:text-red-500" />
+                                    <Trash2 className="w-3.5 h-3.5 text-[#a3acb9] hover:text-red-500" />
                                   </button>
                                 </div>
                               )}
