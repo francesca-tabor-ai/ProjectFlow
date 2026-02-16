@@ -1,0 +1,5 @@
+{
+  "name": "ProjectFlow: Smartsheet-Style Planner",
+  "description": "A high-performance project management application featuring a spreadsheet-like grid, Gantt charts, Kanban boards, and an AI-powered project generation engine.",
+  "requestFramePermissions": []
+}
