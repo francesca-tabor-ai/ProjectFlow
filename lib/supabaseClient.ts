@@ -5,7 +5,7 @@ import { createClient } from '@supabase/supabase-js'
 const getSupabaseUrl = (): string => {
   const url = import.meta.env.VITE_SUPABASE_URL || import.meta.env.SUPABASE_URL;
   if (!url) {
-    throw new Error('Supabase URL is not configured. Please set VITE_SUPABASE_URL or SUPABASE_URL in your .env.local file');
+    throw new Error('Supabase URL is not configured. Please set VITE_SUPABASE_URL in your .env.local file (local) or Vercel Environment Variables (production)');
   }
   return url;
 };
@@ -13,7 +13,7 @@ const getSupabaseUrl = (): string => {
 const getSupabaseAnonKey = (): string => {
   const key = import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.SUPABASE_ANON_KEY;
   if (!key) {
-    throw new Error('Supabase Anon Key is not configured. Please set VITE_SUPABASE_ANON_KEY or SUPABASE_ANON_KEY in your .env.local file');
+    throw new Error('Supabase Anon Key is not configured. Please set VITE_SUPABASE_ANON_KEY in your .env.local file (local) or Vercel Environment Variables (production)');
   }
   return key;
 };
