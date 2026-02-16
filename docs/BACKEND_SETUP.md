@@ -48,13 +48,48 @@ ProjectFlow uses **Supabase** as its backend-as-a-service (BaaS) platform, provi
 
 ## 2. Supabase Setup
 
-### 2.1 Initial Configuration
+> **📖 For a detailed explanation of how Supabase works as your backend, see [SUPABASE_BACKEND_GUIDE.md](./SUPABASE_BACKEND_GUIDE.md)**  
+> **📖 For step-by-step project creation instructions, see [SUPABASE_PROJECT_SETUP.md](./SUPABASE_PROJECT_SETUP.md)**
+
+### 2.1 Sign Up / Log In to Supabase
+
+1. Navigate to [https://supabase.com/](https://supabase.com/)
+2. Click **Start your project** (new users) or **Sign in** (existing users)
+3. Choose authentication method:
+   - **GitHub** (recommended for developers)
+   - **Email** (email and password)
+   - **Google** (Google account)
+4. Complete authentication
+
+> **Note**: If you already have a Supabase account, simply log in. Your ProjectFlow project is already set up.
+
+### 2.2 Access Your Project
 
 Your Supabase project is already configured with:
 - **Project URL**: `https://woigtfojjixtmwaoamap.supabase.co`
 - **Project ID**: `woigtfojjixtmwaoamap`
-- **Anon Key**: Configured in `.env` as `VITE_SUPABASE_ANON_KEY`
-- **Service Role Key**: Configured in `.env` as `VITE_SUPABASE_SERVICE_ROLE_KEY`
+
+To access:
+1. Log in to [Supabase Dashboard](https://supabase.com/dashboard)
+2. Find your project in the list (search for `woigtfojjixtmwaoamap`)
+3. Click to open the project dashboard
+
+### 2.3 Project Configuration
+
+Your project credentials are configured in `.env`:
+- **Anon Key**: `VITE_SUPABASE_ANON_KEY` (safe for client-side)
+- **Service Role Key**: `VITE_SUPABASE_SERVICE_ROLE_KEY` (server-side only, never expose!)
+
+### 2.2 What Supabase Provides
+
+Supabase serves as your complete backend, providing:
+
+1. **PostgreSQL Database**: Your data is stored in a managed PostgreSQL database
+2. **Instant APIs**: Every table automatically gets REST endpoints (no backend code needed!)
+3. **Authentication**: Built-in user authentication with JWT tokens
+4. **Real-time**: WebSocket subscriptions for live updates
+5. **Storage**: File storage for attachments
+6. **Security**: Row Level Security (RLS) enforces permissions at the database level
 
 ### 2.2 Accessing Supabase Dashboard
 
@@ -179,9 +214,37 @@ All RLS policies are included in the migration files.
 
 ---
 
-## 5. API Usage
+## 5. Frontend Deployment
 
-### 5.1 Supabase Client
+> **📖 For comprehensive deployment guide, see [VERCEL_DEPLOYMENT.md](./VERCEL_DEPLOYMENT.md)**
+
+### Quick Deployment Steps
+
+1. **Push code to Git repository**
+2. **Connect to Vercel**
+3. **Add environment variables**:
+   - `VITE_SUPABASE_URL`
+   - `VITE_SUPABASE_ANON_KEY`
+4. **Deploy**
+
+**Note**: ProjectFlow uses **Vite + React** (not Next.js), so environment variables use `VITE_` prefix, not `NEXT_PUBLIC_`.
+
+---
+
+## 6. API Usage
+
+> **📖 For comprehensive API interaction guide, see [SUPABASE_API_INTERACTION.md](./SUPABASE_API_INTERACTION.md)**
+
+### 5.1 Auto-generated APIs
+
+Supabase automatically generates RESTful APIs for all your tables. **No backend code required!**
+
+Once your schema is defined, you can interact with your data using:
+- **JavaScript Client** (recommended) - Type-safe, easier to use
+- **Direct HTTP Requests** - Using fetch API or cURL
+- **Real-time Subscriptions** - WebSocket-based live updates
+
+### 5.2 Supabase Client
 
 The Supabase client is initialized in `services/supabaseService.ts`:
 
@@ -191,7 +254,7 @@ import { getSupabaseClient } from './services/supabaseService';
 const supabase = getSupabaseClient();
 ```
 
-### 5.2 Basic CRUD Operations
+### 5.3 Basic CRUD Operations
 
 #### **Select (Read)**
 
@@ -328,7 +391,17 @@ return () => {
 };
 ```
 
-### 5.5 File Storage
+### 5.5 Accessing API Documentation
+
+1. **Supabase Dashboard** → **API** → **REST**
+2. See auto-generated documentation for all endpoints
+3. Includes:
+   - Request/response examples
+   - Available filters and operators
+   - Authentication requirements
+   - Query parameter options
+
+### 5.6 File Storage
 
 ```typescript
 // Upload file
@@ -478,13 +551,37 @@ VITE_SUPABASE_URL=https://woigtfojjixtmwaoamap.supabase.co
 
 ## 8. Next Steps
 
+> **📖 For comprehensive next steps guide, see [NEXT_STEPS.md](./NEXT_STEPS.md)**
+
+### Immediate Next Steps
+
 1. **Run Database Migrations**: Execute SQL files in Supabase dashboard
 2. **Set Up Storage Buckets**: Create `attachments` bucket in Storage
 3. **Configure Authentication**: Set up email/password or OAuth providers
 4. **Test API Endpoints**: Use Supabase dashboard API docs
-5. **Implement Service Layer**: Create service functions for each entity
-6. **Add Real-time**: Implement subscriptions for collaboration
-7. **Deploy to Vercel**: Connect repo and configure environment variables
+
+### Development Roadmap
+
+1. **Frontend Implementation**
+   - Implement React components to interact with Supabase API
+   - Build authentication flows
+   - Create workspace/project/sheet components
+   - Add real-time collaboration features
+
+2. **RLS Policy Refinement**
+   - Refine RLS policies as more complex sharing and permissions are implemented
+   - Add granular permissions (PRD_07)
+   - Implement row/column-level access control
+
+3. **Supabase Functions**
+   - Explore Supabase Functions (Edge Functions) for custom backend logic
+   - Implement automation triggers
+   - Add external integrations (Slack, Teams, etc.)
+
+4. **Deploy to Vercel**
+   - Connect repo and configure environment variables
+   - Set up continuous deployment
+   - Configure custom domain (optional)
 
 ---
 

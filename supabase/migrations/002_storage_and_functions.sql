@@ -212,9 +212,13 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- ============================================================================
 -- VIEW: Workspace statistics
 -- Aggregated statistics for workspaces
+-- Note: This view depends on tables from migration 001
 -- ============================================================================
 
-CREATE OR REPLACE VIEW workspace_stats AS
+-- Drop view if it exists (for idempotency)
+DROP VIEW IF EXISTS workspace_stats;
+
+CREATE VIEW workspace_stats AS
 SELECT 
   w.id AS workspace_id,
   w.name AS workspace_name,

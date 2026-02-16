@@ -1,8 +1,9 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 // Get Supabase credentials from environment variables
+// Note: In Vite, use import.meta.env (not process.env)
 const getSupabaseUrl = (): string => {
-  const url = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
+  const url = import.meta.env.VITE_SUPABASE_URL || import.meta.env.SUPABASE_URL;
   if (!url) {
     throw new Error('Supabase URL is not configured. Please set VITE_SUPABASE_URL or SUPABASE_URL in your .env file');
   }
@@ -10,7 +11,7 @@ const getSupabaseUrl = (): string => {
 };
 
 const getSupabaseAnonKey = (): string => {
-  const key = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
+  const key = import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.SUPABASE_ANON_KEY;
   if (!key) {
     throw new Error('Supabase Anon Key is not configured. Please set VITE_SUPABASE_ANON_KEY or SUPABASE_ANON_KEY in your .env file');
   }
@@ -40,7 +41,7 @@ export const getSupabaseClient = (): SupabaseClient => {
 // Service role client (for server-side operations only - use with caution)
 export const getSupabaseServiceClient = (): SupabaseClient => {
   const supabaseUrl = getSupabaseUrl();
-  const serviceRoleKey = process.env.VITE_SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const serviceRoleKey = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY || import.meta.env.SUPABASE_SERVICE_ROLE_KEY;
   
   if (!serviceRoleKey) {
     throw new Error('Supabase Service Role Key is not configured. Please set VITE_SUPABASE_SERVICE_ROLE_KEY or SUPABASE_SERVICE_ROLE_KEY in your .env file');

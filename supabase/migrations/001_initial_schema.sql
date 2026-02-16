@@ -51,31 +51,10 @@ CREATE TABLE workspaces (
 -- Enable RLS
 ALTER TABLE workspaces ENABLE ROW LEVEL SECURITY;
 
--- Users can view workspaces they're members of
-CREATE POLICY "Users can view their workspaces"
-ON workspaces FOR SELECT
-USING (
-  id IN (
-    SELECT workspace_id FROM workspace_members
-    WHERE user_id = auth.uid()
-  )
-);
-
 -- Owners can insert workspaces
 CREATE POLICY "Users can create workspaces"
 ON workspaces FOR INSERT
 WITH CHECK (auth.uid() = owner_id);
-
--- Owners can update their workspaces
-CREATE POLICY "Owners can update workspaces"
-ON workspaces FOR UPDATE
-USING (
-  owner_id = auth.uid() OR
-  id IN (
-    SELECT workspace_id FROM workspace_members
-    WHERE user_id = auth.uid() AND role = 'Owner'
-  )
-);
 
 -- Owners can delete their workspaces
 CREATE POLICY "Owners can delete workspaces"
@@ -133,6 +112,28 @@ ON workspace_members FOR DELETE
 USING (
   workspace_id IN (
     SELECT id FROM workspaces WHERE owner_id = auth.uid()
+  )
+);
+
+-- Now add workspaces policies that reference workspace_members
+-- Users can view workspaces they're members of
+CREATE POLICY "Users can view their workspaces"
+ON workspaces FOR SELECT
+USING (
+  id IN (
+    SELECT workspace_id FROM workspace_members
+    WHERE user_id = auth.uid()
+  )
+);
+
+-- Owners can update their workspaces
+CREATE POLICY "Owners can update workspaces"
+ON workspaces FOR UPDATE
+USING (
+  owner_id = auth.uid() OR
+  id IN (
+    SELECT workspace_id FROM workspace_members
+    WHERE user_id = auth.uid() AND role = 'Owner'
   )
 );
 
