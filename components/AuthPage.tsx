@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { Activity, Mail, Lock, ArrowRight, Github, Chrome } from 'lucide-react';
 import { User } from '../types';
+import GoogleLoginButton from './GoogleLoginButton';
 
 interface AuthPageProps {
   onAuthSuccess: (user: User) => void;
@@ -127,10 +128,7 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess }) => {
           </div>
 
           <div className="grid grid-cols-2 gap-4 mt-6">
-            <button className="flex items-center justify-center gap-2 py-3 border border-[#e3e8ee] rounded-xl hover:bg-[#f7f8f9] transition-all font-semibold text-[14px] text-[#4f566b]">
-              <Chrome className="w-4 h-4" />
-              Google
-            </button>
+            <GoogleLoginButton />
             <button className="flex items-center justify-center gap-2 py-3 border border-[#e3e8ee] rounded-xl hover:bg-[#f7f8f9] transition-all font-semibold text-[14px] text-[#4f566b]">
               <Github className="w-4 h-4" />
               GitHub

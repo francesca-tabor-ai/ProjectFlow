@@ -8,7 +8,9 @@ import GanttChart from './components/GanttChart';
 import CalendarView from './components/CalendarView';
 import AIAssistant from './components/AIAssistant';
 import AuthPage from './components/AuthPage';
+import AuthCallback from './components/AuthCallback';
 import UserProfileModal from './components/UserProfileModal';
+import { supabase } from './lib/supabaseClient';
 import ShareModal from './components/ShareModal';
 import CommentsPanel from './components/CommentsPanel';
 import ActivityLogPage from './components/ActivityLogPanel';
@@ -198,6 +200,8 @@ const App: React.FC = () => {
   const [activeFilters, setActiveFilters] = useState<FilterConfig>(DEFAULT_FILTERS);
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   
+  const [isHandlingCallback, setIsHandlingCallback] = useState(false);
+
   const [aiMetrics, setAiMetrics] = useState<AIMetric[]>(() => {
     const saved = localStorage.getItem(STORAGE_KEYS.AI_METRICS);
     return saved ? JSON.parse(saved) : [
@@ -219,6 +223,76 @@ const App: React.FC = () => {
   });
 
   const saveTimeoutRef = useRef<number | null>(null);
+
+  // Check for OAuth callback in URL (Supabase uses hash fragments for SPAs)
+  useEffect(() => {
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    const accessToken = hashParams.get('access_token');
+    const error = hashParams.get('error');
+    
+    if (accessToken || error) {
+      setIsHandlingCallback(true);
+      // Clean up URL after Supabase processes it
+      setTimeout(() => {
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }, 100);
+    }
+  }, []);
+
+  // Initialize Supabase session on mount
+  useEffect(() => {
+    async function initSession() {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          const supabaseUser = {
+            id: session.user.id,
+            name: session.user.user_metadata?.full_name || session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'User',
+            email: session.user.email || ''
+          };
+          setUser({ ...supabaseUser, color: userColor });
+          localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(supabaseUser));
+        }
+      } catch (err) {
+        console.error('Error initializing session:', err);
+      }
+    }
+    initSession();
+  }, [userColor]);
+
+  // Auth state listener
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth event:', event, session);
+      
+      if (event === 'SIGNED_IN' && session?.user) {
+        const supabaseUser = {
+          id: session.user.id,
+          name: session.user.user_metadata?.full_name || session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'User',
+          email: session.user.email || ''
+        };
+        setUser({ ...supabaseUser, color: userColor });
+        localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(supabaseUser));
+        setIsHandlingCallback(false);
+      } else if (event === 'SIGNED_OUT') {
+        setUser(null);
+        localStorage.removeItem(STORAGE_KEYS.USER);
+        setIsHandlingCallback(false);
+      } else if (event === 'TOKEN_REFRESHED' && session?.user) {
+        // Update user if needed
+        const supabaseUser = {
+          id: session.user.id,
+          name: session.user.user_metadata?.full_name || session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'User',
+          email: session.user.email || ''
+        };
+        setUser({ ...supabaseUser, color: userColor });
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [userColor]);
 
   const addNotification = useCallback((title: string, message: string, type: 'info' | 'success' | 'warning' = 'info') => {
     const newNotif: AppNotification = { id: `notif-${Date.now()}-${Math.random()}`, title, message, type, timestamp: Date.now() };
@@ -567,8 +641,20 @@ const App: React.FC = () => {
     addNotification("Member Removed", `Successfully removed ${member.name} from the workspace.`, "info");
   }, [activeWorkspace, activeWorkspaceId, addNotification]);
 
-  const handleAuthSuccess = (authUser: User) => { setUser({ ...authUser, color: userColor }); localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(authUser)); };
-  const handleLogout = () => { setUser(null); localStorage.removeItem(STORAGE_KEYS.USER); setIsProfileOpen(false); };
+  const handleAuthSuccess = (authUser: User) => { 
+    setUser({ ...authUser, color: userColor }); 
+    localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(authUser)); 
+    setIsHandlingCallback(false);
+  };
+  const handleLogout = async () => { 
+    await supabase.auth.signOut();
+    setUser(null); 
+    localStorage.removeItem(STORAGE_KEYS.USER); 
+    setIsProfileOpen(false); 
+  };
+  const handleAuthError = () => {
+    setIsHandlingCallback(false);
+  };
   const handleUpdateProfile = (updatedUser: User) => { setUser({ ...updatedUser, color: userColor }); localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(updatedUser)); };
 
   const handleSelectWorkspace = (id: string) => { setActiveWorkspaceId(id); const wsProj = projects.find(p => p.workspaceId === id); if (wsProj) setActiveProjectId(wsProj.id); };
@@ -675,6 +761,10 @@ const App: React.FC = () => {
       return sortConfig.direction === 'asc' ? (aVal < bVal ? -1 : 1) : (aVal < bVal ? 1 : -1);
     });
   }, [filteredRows, sortConfig]);
+
+  if (isHandlingCallback) {
+    return <AuthCallback onAuthSuccess={handleAuthSuccess} onAuthError={handleAuthError} />;
+  }
 
   if (!user) return <AuthPage onAuthSuccess={handleAuthSuccess} />;
 
