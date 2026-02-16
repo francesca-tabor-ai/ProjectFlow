@@ -64,6 +64,11 @@ Complete documentation for setting up and using the Supabase backend for Project
    - Supabase Functions exploration
    - Implementation priority and roadmap
 
+7. **[Dummy Data Guide](./DUMMY_DATA_GUIDE.md)** 📊
+   - Load sample ML Observability Platform data
+   - Testing and development data
+   - Data structure and customization
+
 4b. **[Supabase API Interaction](./SUPABASE_API_INTERACTION.md)** 🔌
    - How auto-generated APIs work
    - Using JavaScript client vs HTTP requests

@@ -56,6 +56,14 @@ Creates:
 - Database views
 - Triggers for automatic profile creation
 
+### `003_dummy_data.sql` (Optional)
+Loads sample data for testing:
+- 1 user (AI Product Manager)
+- 1 workspace (2021.ai Observability Workspace)
+- 1 project (ML Observability Platform)
+- 3 sheets with columns and rows
+- See [DUMMY_DATA_GUIDE.md](../docs/DUMMY_DATA_GUIDE.md) for details
+
 ## Storage Setup
 
 ### Create Bucket
