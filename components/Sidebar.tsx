@@ -20,8 +20,7 @@ import {
   Edit3,
   Trash2,
   Settings2,
-  Sparkles,
-  GripVertical
+  Sparkles
 } from 'lucide-react';
 import { Project, User, Workspace, Sheet, Role, AppPage } from '../types';
 
@@ -183,7 +182,27 @@ const Sidebar: React.FC<SidebarProps> = ({
   );
 
   return (
-    <div className="w-64 bg-[#f7f8f9] h-screen flex flex-col border-r border-[#e3e8ee] shrink-0">
+    <div 
+      ref={sidebarRef}
+      className="bg-[#f7f8f9] h-screen flex flex-col border-r border-[#e3e8ee] shrink-0 relative"
+      style={{ width: `${sidebarWidth}px` }}
+    >
+      {/* Resize Handle */}
+      <div
+        onMouseDown={(e) => {
+          e.preventDefault();
+          setIsResizing(true);
+        }}
+        className={`absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-[#6366f1] transition-colors z-10 ${
+          isResizing ? 'bg-[#6366f1]' : 'bg-transparent'
+        }`}
+        style={{ 
+          cursor: 'col-resize',
+        }}
+      >
+        <div className="absolute right-0 top-1/2 -translate-y-1/2 -translate-x-1/2 w-1 h-12 bg-[#e3e8ee] rounded-full opacity-0 hover:opacity-100 transition-opacity pointer-events-none" />
+      </div>
+
       <div className="p-5 flex items-center gap-3 mb-2">
         <div className="w-8 h-8 stripe-gradient rounded-lg flex items-center justify-center shadow-sm">
           <Activity className="w-5 h-5 text-white" />
