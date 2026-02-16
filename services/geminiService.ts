@@ -5,13 +5,15 @@ import Anthropic from "@anthropic-ai/sdk";
 import { RowData, AIInsight, AICommandResult, Member, AIMetric } from "../types";
 
 // Initialize AI clients with priority order: OpenAI -> Anthropic -> Gemini
+// WARNING: Using OpenAI SDK in browser exposes API keys. For production, use a backend API.
 const getAIClient = () => {
-  const openaiKey = process.env.OPENAI_API_KEY;
-  const anthropicKey = process.env.ANTHROPIC_API_KEY;
-  const geminiKey = process.env.GEMINI_API_KEY;
+  // Use import.meta.env for Vite, fallback to process.env for compatibility
+  const openaiKey = import.meta.env.OPENAI_API_KEY || (process.env as any).OPENAI_API_KEY;
+  const anthropicKey = import.meta.env.ANTHROPIC_API_KEY || (process.env as any).ANTHROPIC_API_KEY;
+  const geminiKey = import.meta.env.GEMINI_API_KEY || (process.env as any).GEMINI_API_KEY;
 
   if (openaiKey && openaiKey !== 'your_openai_api_key_here') {
-    return { type: 'openai' as const, client: new OpenAI({ apiKey: openaiKey }) };
+    return { type: 'openai' as const, client: new OpenAI({ apiKey: openaiKey, dangerouslyAllowBrowser: true }) };
   }
   if (anthropicKey && anthropicKey !== 'your_anthropic_api_key_here') {
     return { type: 'anthropic' as const, client: new Anthropic({ apiKey: anthropicKey }) };
@@ -105,10 +107,11 @@ const callAIWithFallback = async (
   taskType: string,
   systemPrompt?: string
 ): Promise<{ text: string, provider: string, model: string }> => {
+  // Use import.meta.env for Vite, fallback to process.env for compatibility
   const providers = [
-    { type: 'openai' as const, key: process.env.OPENAI_API_KEY },
-    { type: 'anthropic' as const, key: process.env.ANTHROPIC_API_KEY },
-    { type: 'gemini' as const, key: process.env.GEMINI_API_KEY }
+    { type: 'openai' as const, key: import.meta.env.OPENAI_API_KEY || (process.env as any).OPENAI_API_KEY },
+    { type: 'anthropic' as const, key: import.meta.env.ANTHROPIC_API_KEY || (process.env as any).ANTHROPIC_API_KEY },
+    { type: 'gemini' as const, key: import.meta.env.GEMINI_API_KEY || (process.env as any).GEMINI_API_KEY }
   ].filter(p => p.key && p.key !== `your_${p.type}_api_key_here`);
 
   if (providers.length === 0) {
@@ -127,7 +130,9 @@ const callAIWithFallback = async (
       const modelName = MODEL_MAP[providerConfig.type][modelType];
 
       if (providerConfig.type === 'openai') {
-        const openai = new OpenAI({ apiKey: providerConfig.key! });
+        // WARNING: dangerouslyAllowBrowser is required for browser usage but exposes API keys
+        // For production, consider using a backend API endpoint instead
+        const openai = new OpenAI({ apiKey: providerConfig.key!, dangerouslyAllowBrowser: true });
         const messages: any[] = [];
         if (systemPrompt) {
           messages.push({ role: "system", content: systemPrompt });
