@@ -13,6 +13,7 @@ import UserProfileModal from './components/UserProfileModal';
 import { supabase } from './lib/supabaseClient';
 import { getAllProjects } from './services/projectService';
 import { getWorkspaces } from './services/workspaceService';
+import { generateProjectPlan } from './services/geminiService';
 import ShareModal from './components/ShareModal';
 import CommentsPanel from './components/CommentsPanel';
 import ActivityLogPage from './components/ActivityLogPanel';
@@ -390,8 +391,12 @@ const App: React.FC = () => {
   }, [user, channel]);
 
   const activeWorkspace = useMemo(() => workspaces.find(ws => ws.id === activeWorkspaceId) || workspaces[0], [workspaces, activeWorkspaceId]);
-  // Show all projects (not filtered by workspace) so all dummy projects are visible
-  const workspaceProjects = useMemo(() => projects, [projects]);
+  // Filter projects to show only user-owned projects
+  const userOwnedProjects = useMemo(() => {
+    if (!user) return [];
+    return projects.filter(p => p.ownerId === user.id || p.ownerId === 'guest');
+  }, [projects, user]);
+  const workspaceProjects = useMemo(() => userOwnedProjects, [userOwnedProjects]);
   const activeProject = useMemo(() => projects.find(p => p.id === activeProjectId) || workspaceProjects[0] || null, [projects, activeProjectId, workspaceProjects]);
 
   const currentUserRole = useMemo(() => {
@@ -765,6 +770,52 @@ const App: React.FC = () => {
     setCurrentPage('project');
   };
 
+  const handleGeneratePlansForAllProjects = useCallback(async () => {
+    if (!user) return;
+    
+    const ownedProjects = projects.filter(p => p.ownerId === user.id || p.ownerId === 'guest');
+    if (ownedProjects.length === 0) {
+      addNotification("No Projects", "You don't own any projects to generate plans for.", "info");
+      return;
+    }
+
+    addNotification("AI Plan Generation", `Generating plans for ${ownedProjects.length} project(s)...`, "info");
+    
+    for (const project of ownedProjects) {
+      try {
+        // Check if project already has rows in the first sheet
+        const firstSheet = project.sheets[0];
+        if (firstSheet && firstSheet.rows.length > 0) {
+          // Skip projects that already have data
+          continue;
+        }
+
+        // Generate plan using project name as objective
+        const plan = await generateProjectPlan(project.name);
+        
+        // Update the project with the generated plan
+        setProjects(prev => prev.map(p => {
+          if (p.id !== project.id) return p;
+          const updatedSheets = p.sheets.map((s, idx) => {
+            if (idx === 0) {
+              // Add generated tasks to the first sheet
+              return { ...s, rows: plan.tasks };
+            }
+            return s;
+          });
+          return { ...p, sheets: updatedSheets };
+        }));
+        
+        logActivity(`AI generated project plan for "${project.name}"`);
+      } catch (error) {
+        console.error(`Error generating plan for ${project.name}:`, error);
+        addNotification("Generation Error", `Failed to generate plan for "${project.name}"`, "warning");
+      }
+    }
+    
+    addNotification("Plan Generation Complete", `Successfully generated plans for your projects.`, "success");
+  }, [user, projects, addNotification, logActivity]);
+
   const handleApplySavedView = useCallback((view: SavedView) => { setActiveFilters(view.filters); logActivity(`Applied view: ${view.name}`); }, [logActivity]);
   const removeNotification = useCallback((id: string) => setNotifications(prev => prev.filter(n => n.id !== id)), []);
 
@@ -894,6 +945,7 @@ const App: React.FC = () => {
         onDeleteProject={handleDeleteProject}
         onRenameSheet={handleRenameSheet}
         onDeleteSheet={handleDeleteSheet}
+        onGeneratePlansForAllProjects={handleGeneratePlansForAllProjects}
       />
       <main className="flex-1 flex flex-col min-w-0 h-full overflow-hidden relative">
         {renderCurrentPage()}

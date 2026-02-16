@@ -19,7 +19,9 @@ import {
   Info,
   Edit3,
   Trash2,
-  Settings2
+  Settings2,
+  Sparkles,
+  GripVertical
 } from 'lucide-react';
 import { Project, User, Workspace, Sheet, Role, AppPage } from '../types';
 
@@ -94,7 +96,13 @@ interface SidebarProps {
   onDeleteProject: (id: string) => void;
   onRenameSheet: (projectId: string, sheetId: string, name: string) => void;
   onDeleteSheet: (projectId: string, sheetId: string) => void;
+  onGeneratePlansForAllProjects?: () => void;
 }
+
+const SIDEBAR_WIDTH_STORAGE_KEY = 'projectflow_sidebar_width';
+const MIN_SIDEBAR_WIDTH = 200;
+const MAX_SIDEBAR_WIDTH = 600;
+const DEFAULT_SIDEBAR_WIDTH = 256; // w-64 = 256px
 
 const Sidebar: React.FC<SidebarProps> = ({ 
   workspaces, 
@@ -116,10 +124,49 @@ const Sidebar: React.FC<SidebarProps> = ({
   onRenameProject,
   onDeleteProject,
   onRenameSheet,
-  onDeleteSheet
+  onDeleteSheet,
+  onGeneratePlansForAllProjects
 }) => {
   const [isWorkspaceDropdownOpen, setIsWorkspaceDropdownOpen] = useState(false);
+  const [sidebarWidth, setSidebarWidth] = useState<number>(() => {
+    const saved = localStorage.getItem(SIDEBAR_WIDTH_STORAGE_KEY);
+    return saved ? parseInt(saved, 10) : DEFAULT_SIDEBAR_WIDTH;
+  });
+  const [isResizing, setIsResizing] = useState(false);
+  const sidebarRef = useRef<HTMLDivElement>(null);
   const canModify = userRole === 'Owner' || userRole === 'Editor';
+
+  useEffect(() => {
+    localStorage.setItem(SIDEBAR_WIDTH_STORAGE_KEY, sidebarWidth.toString());
+  }, [sidebarWidth]);
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isResizing) return;
+      
+      const newWidth = e.clientX;
+      const clampedWidth = Math.max(MIN_SIDEBAR_WIDTH, Math.min(MAX_SIDEBAR_WIDTH, newWidth));
+      setSidebarWidth(clampedWidth);
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+    };
+
+    if (isResizing) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+  }, [isResizing]);
 
   const NavButton = ({ id, icon: Icon, label }: { id: AppPage, icon: any, label: string }) => (
     <button 
@@ -201,11 +248,22 @@ const Sidebar: React.FC<SidebarProps> = ({
         <div className="mb-6">
           <div className="flex items-center justify-between px-3 text-[11px] font-bold text-[#697386] uppercase tracking-wider mb-2">
             Projects
-            {canModify && (
-              <button onClick={onCreateProject} className="hover:text-[#1a1f36] transition-colors p-0.5">
-                <Plus className="w-3.5 h-3.5" />
-              </button>
-            )}
+            <div className="flex items-center gap-1">
+              {canModify && onGeneratePlansForAllProjects && (
+                <button 
+                  onClick={onGeneratePlansForAllProjects} 
+                  className="hover:text-[#6366f1] transition-colors p-0.5"
+                  title="Generate AI plans for all your projects"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                </button>
+              )}
+              {canModify && (
+                <button onClick={onCreateProject} className="hover:text-[#1a1f36] transition-colors p-0.5">
+                  <Plus className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
           </div>
           <div className="space-y-0.5">
             {projects.map(proj => (
