@@ -186,7 +186,7 @@ export interface Collaborator extends User {
 
 export type ViewMode = 'grid' | 'gantt' | 'kanban' | 'calendar';
 
-export type AppPage = 'project' | 'activity' | 'automations' | 'integrations' | 'ai-reliability' | 'ai-retraining' | 'ai-advanced' | 'team' | 'workspace-settings';
+export type AppPage = 'project' | 'activity' | 'automations' | 'integrations' | 'ai-reliability' | 'ai-retraining' | 'ai-advanced' | 'team' | 'workspace-settings' | 'proposal';
 
 export interface SortConfig {
   columnId: string;

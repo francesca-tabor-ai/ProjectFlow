@@ -101,7 +101,7 @@ const validateInput = (input: string): boolean => {
 /**
  * Unified AI call function with automatic fallback
  */
-const callAIWithFallback = async (
+export const callAIWithFallback = async (
   prompt: string,
   schema: any,
   taskType: string,
