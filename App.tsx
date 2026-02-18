@@ -28,7 +28,6 @@ import AIRetrainingPage from './components/AIRetrainingDashboard';
 import AIAdvancedPage from './components/AIAdvancedGovernance';
 import TeamMembersPage from './components/TeamMembersPage';
 import WorkspaceSettings from './components/WorkspaceSettings';
-import ProposalPage from './components/ProposalPage';
 import { Project, ViewMode, RowData, User, Workspace, Sheet, Column, SortConfig, SyncEvent, RemoteCursor, Collaborator, Role, Member, Comment, ActivityEntry, FilterConfig, SavedView, AutomationRule, AppNotification, Template, FileAttachment, PermissionConfig, IntegrationSettings, AICommandResult, AIMetric, RetrainingJob, RetrainingConfig, AppPage, RoleDefinition } from './types';
 import { INITIAL_SHEET, DEFAULT_COLUMNS } from './constants';
 import { computeSheetData } from './services/formulaEngine';
@@ -950,8 +949,6 @@ const App: React.FC = () => {
     );
 
     switch (currentPage) {
-      case 'proposal':
-        return <ProposalPage />;
       case 'activity':
         return <ActivityLogPage logs={activeProject?.activityLog || []} entityName={activeProject?.name || ''} filterRowId={rowActivityFilter} />;
       case 'automations':

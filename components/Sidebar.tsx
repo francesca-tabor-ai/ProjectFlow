@@ -20,8 +20,7 @@ import {
   Edit3,
   Trash2,
   Settings2,
-  Sparkles,
-  ClipboardList
+  Sparkles
 } from 'lucide-react';
 import { Project, User, Workspace, Sheet, Role, AppPage } from '../types';
 
@@ -407,7 +406,6 @@ const Sidebar: React.FC<SidebarProps> = ({
             Organization
           </div>
           <div className="space-y-0.5">
-            <NavButton id="proposal" icon={ClipboardList} label="Proposal" />
             <NavButton id="activity" icon={Clock} label="Activity History" />
             <NavButton id="automations" icon={Zap} label="Automations" />
             <NavButton id="integrations" icon={Plug} label="Integrations" />
